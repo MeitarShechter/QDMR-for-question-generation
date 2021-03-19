@@ -85,33 +85,48 @@ from datasets import load_dataset
 
 #         return features
 
+def prepare_data(example):
+    decomp = example['decomposition']
+
+    decomp = decomp.replace(';', '@@')
+    decomp = decomp.replace('#', '##')
+    example['decomposition'] = decomp
+    return example
+
 
 class BreakDataset(torch.utils.data.Dataset):
     def __init__(self, tokenizer, split='train'):
         super().__init__()
         data = load_dataset('break_data', 'QDMR')[split]
-        data = self.prepare_data(data, tokenizer)
+        # data = self.prepare_data(data, tokenizer)
 
         self.split = split
         self.data = data
+        self.data = self.data.map(prepare_data)
 
-    def prepare_data(self, data, tokenizer):
-        # dataset = []
-        for i, example in enumerate(data):
-            # question = example['question_text']
-            decomp = example['decomposition']
-
-            decomp = decomp.replace(';', '@@')
-            decomp = decomp.replace('#', '##')
-
-            # q_encoding = tokenizer(question, return_tensors='pt', padding=True, truncation=True)
-            # d_encoding = tokenizer(decomp, return_tensors='pt', padding=True, truncation=True)
-
-            # dataset.append({'input_ids':d_encoding['input_ids'], 'attention_mask':d_encoding['attention_mask'], 'decoder_input_ids':q_encoding['input_ids'], 'labels':q_encoding['input_ids']})
-            # dataset.append({'question_text':question, 'decomposition':decomp})
-            example['decomposition'] = decomp
-        
-        return data
+    # def prepare_data(self, example):
+    #     decomp = example['decomposition']
+    #
+    #     decomp = decomp.replace(';', '@@')
+    #     decomp = decomp.replace('#', '##')
+    #     example['decomposition'] = decomp
+    # def prepare_data(self, data, tokenizer):
+    #     # dataset = []
+    #     for i, example in enumerate(data):
+    #         # question = example['question_text']
+    #         decomp = example['decomposition']
+    #
+    #         decomp = decomp.replace(';', '@@')
+    #         decomp = decomp.replace('#', '##')
+    #
+    #         # q_encoding = tokenizer(question, return_tensors='pt', padding=True, truncation=True)
+    #         # d_encoding = tokenizer(decomp, return_tensors='pt', padding=True, truncation=True)
+    #
+    #         # dataset.append({'input_ids':d_encoding['input_ids'], 'attention_mask':d_encoding['attention_mask'], 'decoder_input_ids':q_encoding['input_ids'], 'labels':q_encoding['input_ids']})
+    #         # dataset.append({'question_text':question, 'decomposition':decomp})
+    #         example['decomposition'] = decomp
+    #
+    #     return data
 
     def __len__(self):
         return self.data.__len__()
@@ -144,7 +159,6 @@ def train(opt):
     # dataset = load_dataset('break_data', 'QDMR')
     train_dataset = BreakDataset(tokenizer, 'train')
     val_dataset = BreakDataset(tokenizer, 'validation')
-
     def preprocess_function(examples):
         inputs = examples['decomposition']
         targets = examples['question_text']
