@@ -71,8 +71,8 @@ def train(opt):
     opt.device = device
 
     ### model declaration ###
-    model = BartForConditionalGeneration.from_pretrained('facebook/bart-large')
-    tokenizer = BartTokenizer.from_pretrained('facebook/bart-large')
+    model = BartForConditionalGeneration.from_pretrained('facebook/bart-base')
+    tokenizer = BartTokenizer.from_pretrained('facebook/bart-base')
 
     ### declare dataset ###
     train_dataset = BreakDataset('train')
