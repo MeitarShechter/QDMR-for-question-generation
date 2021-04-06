@@ -117,10 +117,10 @@ def train(opt):
 
     training_args = TrainingArguments(
         output_dir=opt.log_dir,          # output directory
-        num_train_epochs=2,              # total number of training epochs
+        num_train_epochs=2000,              # total number of training epochs
         per_device_train_batch_size=2,  # batch size per device during training
         per_device_eval_batch_size=64,   # batch size for evaluation
-        warmup_steps=1,                # number of warmup steps for learning rate scheduler
+        warmup_steps=50,                # number of warmup steps for learning rate scheduler
         weight_decay=0.01,               # strength of weight decay
         logging_dir=opt.log_dir,         # directory for storing logs
         logging_steps=1,
