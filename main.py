@@ -31,7 +31,10 @@ def shift_tokens_right(input_ids, pad_token_id):
 class BreakDataset(torch.utils.data.Dataset):
     def __init__(self, split='train'):
         super().__init__()
-        data = load_dataset('break_data', 'QDMR')[split]
+        if 'joberant' in os.path.abspath('./'):
+            data = load_dataset('break_data', 'QDMR', cache_dir='/home/joberant/nlp_fall_2021/omriefroni/tmp_cache')[split]
+        else:
+            data = load_dataset('break_data', 'QDMR')[split]
         data = data.select(range(8))
 
         self.split = split
