@@ -71,8 +71,12 @@ def train(opt):
     opt.device = device
 
     ### model declaration ###
-    model = BartForConditionalGeneration.from_pretrained('facebook/bart-base')
-    tokenizer = BartTokenizer.from_pretrained('facebook/bart-base')
+    if 'joberant' in os.path.abspath('./'):
+        model = BartForConditionalGeneration.from_pretrained('facebook/bart-large', cache_dir='/home/joberant/nlp_fall_2021/omriefroni/tmp_cache')
+        tokenizer = BartTokenizer.from_pretrained('facebook/bart-large', cache_dir='/home/joberant/nlp_fall_2021/omriefroni/tmp_cache')
+    else:
+        model = BartForConditionalGeneration.from_pretrained('facebook/bart-large')
+        tokenizer = BartTokenizer.from_pretrained('facebook/bart-large')
 
     ### declare dataset ###
     train_dataset = BreakDataset('train')
