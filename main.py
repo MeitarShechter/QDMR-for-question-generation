@@ -32,7 +32,7 @@ class BreakDataset(torch.utils.data.Dataset):
     def __init__(self, split='train'):
         super().__init__()
         if 'joberant' in os.path.abspath('./'):
-            data = load_dataset('break_data', 'QDMR', cache_dir='/home/joberant/nlp_fall_2021/omriefroni/tmp_cache')[split]
+            data = load_dataset('break_data', 'QDMR', cache_dir='/home/joberant/nlp_fall_2021/omriefroni/.cache')[split]
         else:
             data = load_dataset('break_data', 'QDMR')[split]
         data = data.select(range(8))
@@ -75,8 +75,8 @@ def train(opt):
 
     ### model declaration ###
     if 'joberant' in os.path.abspath('./'):
-        model = BartForConditionalGeneration.from_pretrained('facebook/bart-large', cache_dir='/home/joberant/nlp_fall_2021/omriefroni/tmp_cache')
-        tokenizer = BartTokenizer.from_pretrained('facebook/bart-large', cache_dir='/home/joberant/nlp_fall_2021/omriefroni/tmp_cache')
+        model = BartForConditionalGeneration.from_pretrained('facebook/bart-large', cache_dir='/home/joberant/nlp_fall_2021/omriefroni/.cache')
+        tokenizer = BartTokenizer.from_pretrained('facebook/bart-large', cache_dir='/home/joberant/nlp_fall_2021/omriefroni/.cache')
     else:
         model = BartForConditionalGeneration.from_pretrained('facebook/bart-large')
         tokenizer = BartTokenizer.from_pretrained('facebook/bart-large')
