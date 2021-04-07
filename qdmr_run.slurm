@@ -4,7 +4,7 @@
 #SBATCH --error=test1.err
 #SBATCH --partition=studentbatch
 #SBATCH --job-name testing
-#SBATCH --time=1
+#SBATCH --time=100
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --gpus=1
