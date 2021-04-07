@@ -32,10 +32,10 @@ class BreakDataset(torch.utils.data.Dataset):
     def __init__(self, split='train'):
         super().__init__()
         if 'joberant' in os.path.abspath('./'):
-            data = load_dataset('break_data', 'QDMR', cache_dir='/home/joberant/nlp_fall_2021/omriefroni/.cache')[split]
+            data = load_dataset('break_data', 'QDMR', cache_dir='/home/joberant/nlp_fall_2021/meitars/.cache')[split]
         else:
             data = load_dataset('break_data', 'QDMR')[split]
-        data = data.select(range(8))
+        # data = data.select(range(8))
 
         self.split = split
         self.data = data
@@ -75,8 +75,8 @@ def train(opt):
 
     ### model declaration ###
     if 'joberant' in os.path.abspath('./'):
-        model = BartForConditionalGeneration.from_pretrained('facebook/bart-large', cache_dir='/home/joberant/nlp_fall_2021/omriefroni/.cache')
-        tokenizer = BartTokenizer.from_pretrained('facebook/bart-large', cache_dir='/home/joberant/nlp_fall_2021/omriefroni/.cache')
+        model = BartForConditionalGeneration.from_pretrained('facebook/bart-large', cache_dir='/home/joberant/nlp_fall_2021/meitars/.cache')
+        tokenizer = BartTokenizer.from_pretrained('facebook/bart-large', cache_dir='/home/joberant/nlp_fall_2021/meitars/.cache')
     else:
         model = BartForConditionalGeneration.from_pretrained('facebook/bart-large')
         tokenizer = BartTokenizer.from_pretrained('facebook/bart-large')
@@ -117,14 +117,20 @@ def train(opt):
 
     training_args = TrainingArguments(
         output_dir=opt.log_dir,          # output directory
-        num_train_epochs=2000,              # total number of training epochs
-        per_device_train_batch_size=2,  # batch size per device during training
-        per_device_eval_batch_size=64,   # batch size for evaluation
-        warmup_steps=50,                # number of warmup steps for learning rate scheduler
+        num_train_epochs=20,              # total number of training epochs
+        per_device_train_batch_size=32,  # batch size per device during training
+        per_device_eval_batch_size=32,   # batch size for evaluation
+        warmup_steps=500,                # number of warmup steps for learning rate scheduler
         weight_decay=0.01,               # strength of weight decay
         logging_dir=opt.log_dir,         # directory for storing logs
-        logging_steps=1,
-        evaluation_strategy='epoch',
+        logging_steps=100,
+        logging_strategy="steps",
+        save_strategy="steps",
+        save_steps=500,
+        evaluation_strategy='steps',
+        eval_steps=500,
+        learning_rate=5e-5,              # default
+        # no_cuda=True
     )
 
     data_collator = default_data_collator
