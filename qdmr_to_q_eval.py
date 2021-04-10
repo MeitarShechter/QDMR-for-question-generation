@@ -9,7 +9,7 @@ import argparse
 import torch
 import torch.nn as nn
 
-from transformers import BartModel, BartTokenizer, BartForConditionalGeneration, Seq2SeqTrainer, TrainingArguments, default_data_collator, Trainer
+from transformers import BartModel, BartTokenizer, BartForConditionalGeneration, Seq2SeqTrainer, TrainingArguments, default_data_collator, Trainer, Seq2SeqTrainingArguments, Seq2SeqTrainer
 # from transformers.modeling_bart import shift_tokens_right
 
 # inputs = tokenizer("Hello, my dog is cute", return_tensors="pt")
@@ -28,19 +28,20 @@ def eval_qdmr_to_q(opt, checkpoint_path_name):
 
     ### model declaration ###
     if 'joberant' in os.path.abspath('./'):
-        model_ft = BartForConditionalGeneration.from_pretrained(
-            '/home/joberant/nlp_fall_2021/omriefroni/QDMR-for-question-generation/log/main-08-04-2021__19:52:35/' + checkpoint_path_name + '/',
-            cache_dir='/home/joberant/nlp_fall_2021/meitars/.cache')
+        model = BartForConditionalGeneration.from_pretrained(
+            '/home/joberant/nlp_fall_2021/omriefroni/qdmr_project/log/main-07-04-2021__21:29:25/' + checkpoint_path_name + '/',
+            cache_dir='/home/joberant/nlp_fall_2021/omriefroni/.cache')
         tokenizer = BartTokenizer.from_pretrained(
-            '/home/joberant/nlp_fall_2021/omriefroni/QDMR-for-question-generation/log/main-08-04-2021__19:52:35/' + checkpoint_path_name + '/',
-            cache_dir='/home/joberant/nlp_fall_2021/meitars/.cache')
+            '/home/joberant/nlp_fall_2021/omriefroni/qdmr_project/log/main-07-04-2021__21:29:25/' + checkpoint_path_name + '/',
+            cache_dir='/home/joberant/nlp_fall_2021/omriefroni/.cache')
     else:
-        model_ft = BartForConditionalGeneration.from_pretrained(
+        model = BartForConditionalGeneration.from_pretrained(
             '/Users/omriefroni/Documents/master/nlp/QDMR_project/' + checkpoint_path_name + '/')
         tokenizer = BartTokenizer.from_pretrained(
             '/Users/omriefroni/Documents/master/nlp/QDMR_project/' + checkpoint_path_name + '/')
 
     train_dataset = BreakDataset('train')
+    # val_dataset = BreakDataset('validation')
 
     def preprocess_function(examples):
         inputs = examples['decomposition']
@@ -70,31 +71,39 @@ def eval_qdmr_to_q(opt, checkpoint_path_name):
         return model_inputs
 
     train_dataset.map(preprocess_function)
+    # val_dataset.map(preprocess_function)
 
-    training_args = TrainingArguments(
+    training_args = Seq2SeqTrainingArguments(
         output_dir=opt.log_dir,          # output directory
         num_train_epochs=2000,              # total number of training epochs
         per_device_train_batch_size=2,  # batch size per device during training
-        per_device_eval_batch_size=64,   # batch size for evaluation
+        per_device_eval_batch_size=2,   # batch size for evaluation
         warmup_steps=50,                # number of warmup steps for learning rate scheduler
         weight_decay=0.01,               # strength of weight decay
         logging_dir=opt.log_dir,         # directory for storing logs
         logging_steps=1,
         evaluation_strategy='epoch',
+        predict_with_generate=True
     )
 
 
     data_collator = default_data_collator
 
-    trainer = Trainer(
+    trainer = Seq2SeqTrainer(
         model=model,
         args=training_args,
-        test_dataset=train_dataset,
         tokenizer=tokenizer,
         data_collator=data_collator,
     )
 
-    result = trainer.predict()
+    result = trainer.predict(test_dataset=train_dataset)
+
+    for i in range(10):
+        print('####################')
+        print('DECOMP: %s' % train_dataset[i]['decomposition'])
+        print('ORIG Q: %s' % train_dataset[i]['question_text'])
+        print('PREDICT: %s' % tokenizer.decode(result.predictions[i], skip_special_tokens=True))
+
 
     input_ids = tokenizer("when the soccer match between Liverpool and M.U. is starting", return_tensors="pt")
     greedy_output = model_ft.generate(**input_ids, max_length=256)
@@ -119,4 +128,4 @@ if __name__ == "__main__":
     os.makedirs(opt.log_dir, exist_ok=True)
     log_file = open(os.path.join(opt.log_dir, "training_log.txt"), "a")
     log_file.close()
-    eval_qdmr_to_q(opt, 'checkpoint-99500')
+    eval_qdmr_to_q(opt, 'checkpoint-9500')
