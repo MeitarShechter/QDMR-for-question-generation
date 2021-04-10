@@ -29,17 +29,30 @@ def shift_tokens_right(input_ids, pad_token_id):
 
 
 class BreakDataset(torch.utils.data.Dataset):
-    def __init__(self, split='train'):
+    def __init__(self, split='train', which_half=None):
         super().__init__()
         if 'joberant' in os.path.abspath('./'):
-            data = load_dataset('break_data', 'QDMR', cache_dir='/home/joberant/nlp_fall_2021/meitars/.cache')[split]
+            data = load_dataset('break_data', 'QDMR', cache_dir='/home/joberant/nlp_fall_2021/omriefroni/.cache')[split]
         else:
             data = load_dataset('break_data', 'QDMR')[split]
-        data = data.select(range(10))
+
+        self.med = data.__len__() //2
+        self.total = data.__len__()
+        self.is_unite = False
+
+        if which_half == None:
+            data = data.select(range(10)) # TODO - remove after
+        elif which_half == 1:
+            data = data.select(range(10))
+            # data = data.select(range(self.med)) # TODO remove
+        elif which_half == 2:
+            data = data.select(range(self.med, self.total))
 
 
         self.split = split
         self.data = data
+        self.data_1 = None
+        self.data_2 = None
         self.data = self.data.map(self.prepare_data)
 
     def prepare_data(self, example):
@@ -51,10 +64,24 @@ class BreakDataset(torch.utils.data.Dataset):
         return example
 
     def __len__(self):
-        return self.data.__len__()
+        if self.is_unite:
+            return self.data.__len__() * 2
+        else:
+            return self.data.__len__()
 
     def __getitem__(self, idx):
-        return self.data.__getitem__(idx)
+        if not self.is_unite:
+            return self.data.__getitem__(idx)
+        else:
+            if idx % 2 ==0:
+                return self.data.__getitem__(idx//2)
+            else:
+                new_index = idx//2
+                if new_index < self.med:
+                    self.data_1.__getitem__(new_index)
+                else:
+                    new_index = new_index - self.med
+                    self.data_2.__getitem__(new_index)
 
     def map(self, preprocess_function):
         self.data = self.data.map(preprocess_function)
