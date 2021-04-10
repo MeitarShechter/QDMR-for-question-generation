@@ -1,7 +1,7 @@
 import datetime
 import os
 import sys
-import numpy as np
+# import numpy as np
 import traceback
 import shutil
 import argparse
@@ -70,8 +70,8 @@ def train(opt):
     # torch.cuda.manual_seed(0)
 
     ### choose device ###
-    device = torch.device(opt.device)
-    opt.device = device
+    # device = torch.device(opt.device)
+    # opt.device = device
 
     ### model declaration ###
     if 'joberant' in os.path.abspath('./'):
@@ -86,8 +86,12 @@ def train(opt):
     val_dataset = BreakDataset('validation')
 
     def preprocess_function(examples):
-        inputs = examples['decomposition']
-        targets = examples['question_text']
+        if opt.Q2D:
+            inputs = examples['question_text']
+            targets = examples['decomposition']
+        else:
+            inputs = examples['decomposition']
+            targets = examples['question_text']
         model_inputs = tokenizer(inputs, max_length=256, padding='max_length', truncation=True, return_tensors="pt")
         # model_inputs = tokenizer(inputs, max_length=256, padding='max_length', truncation=True)
 
@@ -118,8 +122,8 @@ def train(opt):
     training_args = TrainingArguments(
         output_dir=opt.log_dir,          # output directory
         num_train_epochs=20,              # total number of training epochs
-        per_device_train_batch_size=32,  # batch size per device during training
-        per_device_eval_batch_size=32,   # batch size for evaluation
+        per_device_train_batch_size=2,  # batch size per device during training
+        per_device_eval_batch_size=2,   # batch size for evaluation
         warmup_steps=500,                # number of warmup steps for learning rate scheduler
         weight_decay=0.01,               # strength of weight decay
         logging_dir=opt.log_dir,         # directory for storing logs
@@ -147,38 +151,6 @@ def train(opt):
     trainer.train()    
 
 
-    # ### load checkpoint if in need ###
-    # epoch = None
-    # if opt.ckpt:
-    #     net, epoch = load_network(net, opt.ckpt, device)
-
-    # ### declare on all relevant losses ###
-    # all_losses = AllLosses(opt)
-
-    # ### optimizer ###
-    # optimizer = torch.optim.Adam([
-    #     {"params": net.encoder.parameters()},
-    #     {"params": net.decoder.parameters()}], lr=opt.lr)
-
-    # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, int(opt.nepochs*0.8), gamma=0.1, last_epoch=-1)
-
-    # ### train ###
-    # log_file = open(os.path.join(opt.log_dir, "training_log.txt"), "a")
-    # log_file.write("----- Starting training process -----\n")
-    # net.train()
-    # start_epoch = 0 if epoch is None else epoch
-    # t = 0 if epoch is None else start_epoch*len(dataloader) 
-
-    # log_interval = max(len(dataloader)//5, 100)
-    # save_interval = max(opt.nepochs//10, 1)
-    # running_avg_loss = -1
-
-
-    # log_file.close()
-    # writer.close()
-    # save_network(net, opt.log_dir, network_label="net", epoch_label="final")
-
-    # test(opt, net=model, tokenizer=tokenizer)
 
 
 def test(opt, net, tokenizer, save_subdir="test"):
@@ -197,6 +169,13 @@ def test(opt, net, tokenizer, save_subdir="test"):
     # os.makedirs(test_output_dir, exist_ok=True)
     # with open(os.path.join(test_output_dir, "eval.txt"), "w") as f:
 
+    model_ft = BartForConditionalGeneration.from_pretrained('/home/joberant/nlp_fall_2021/meitars/QDMR-for-question-generation/log/main-08-04-2021__19:52:35/checkpoint-60500/', cache_dir='/home/joberant/nlp_fall_2021/meitars/.cache')
+    tokenizer = BartTokenizer.from_pretrained('/home/joberant/nlp_fall_2021/meitars/QDMR-for-question-generation/log/main-08-04-2021__19:52:35/checkpoint-60500/', cache_dir='/home/joberant/nlp_fall_2021/meitars/.cache')
+
+    input_ids = tokenizer("when the soccer match between Liverpool and M.U. is starting", return_tensors="pt")
+    greedy_output = model_ft.generate(**input_ids, max_length=256)
+    print(tokenizer.decode(greedy_output[0], skip_special_tokens=True))
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter, description='dynamic cage deformation')
@@ -204,6 +183,7 @@ if __name__ == "__main__":
     parser.add_argument("--ckpt", type=str, help="path to model to test")
     parser.add_argument("--log_dir", type=str, help="log directory", default="./log")
     parser.add_argument("--device", type=str, help="device", default="cpu", choices=["cpu", "cuda:0"])
+    parser.add_argument("--Q2D", action="store_true", help="which direction we want our transformer, if true then Question to Decomposition")
     opt = parser.parse_args()
 
     if opt.ckpt is not None:
@@ -214,8 +194,8 @@ if __name__ == "__main__":
                                                                     opt.name]))) # log dir will be the file name + date_time + expirement name
 
     os.makedirs(opt.log_dir, exist_ok=True)
-    log_file = open(os.path.join(opt.log_dir, "training_log.txt"), "a")
-    log_file.close()
+    # log_file = open(os.path.join(opt.log_dir, "training_log.txt"), "a")
+    # log_file.close()
     train(opt)
 
 
