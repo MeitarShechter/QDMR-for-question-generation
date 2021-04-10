@@ -1,10 +1,8 @@
 #! /bin/sh
-#SBATCH --job-name=test1
-#SBATCH --output=test1.out
-#SBATCH --error=test1.err
+#SBATCH --job-name=QDMR_D_to_Q
+#SBATCH --output=QDMR_D_to_Q.out
+#SBATCH --error=QDMR_D_to_Q.err
 #SBATCH --partition=studentbatch
-#SBATCH --job-name testing
-#SBATCH --time=100
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --gpus=1
