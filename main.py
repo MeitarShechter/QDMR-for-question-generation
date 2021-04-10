@@ -35,7 +35,7 @@ class BreakDataset(torch.utils.data.Dataset):
             data = load_dataset('break_data', 'QDMR', cache_dir='/home/joberant/nlp_fall_2021/omriefroni/.cache')[split]
         else:
             data = load_dataset('break_data', 'QDMR')[split]
-        data = data.select(range(8))
+        data = data.select(range(10))
 
         self.split = split
         self.data = data
@@ -97,19 +97,19 @@ def train(opt):
             # labels = tokenizer(targets, max_length=256, padding='max_length', truncation=True)
 
         # If we are padding here, replace all tokenizer.pad_token_id in the labels by -100 when we want to ignore
-        # padding in the loss.    
+        # padding in the loss.
         decoder_input_ids = shift_tokens_right(labels['input_ids'], model.config.pad_token_id)
         # labels["input_ids"] = [
         labels["input_ids"][labels["input_ids"][:, :] == model.config.pad_token_id] = -100
         # labels["input_ids"] = \
-        #     [(l if l != tokenizer.pad_token_id else -100) for l in labels["input_ids"][0]] 
+        #     [(l if l != tokenizer.pad_token_id else -100) for l in labels["input_ids"][0]]
             # [(l if l != tokenizer.pad_token_id else -100) for l in label] for label in labels["input_ids"]
         # ]
 
         model_inputs["labels"] = labels["input_ids"][0,:]
         model_inputs["decoder_input_ids"] = decoder_input_ids[0,:]
-        model_inputs["input_ids"] = model_inputs["input_ids"][0,:] 
-        model_inputs["attention_mask"] = model_inputs["attention_mask"][0,:] 
+        model_inputs["input_ids"] = model_inputs["input_ids"][0,:]
+        model_inputs["attention_mask"] = model_inputs["attention_mask"][0,:]
         return model_inputs
 
     train_dataset.map(preprocess_function)
