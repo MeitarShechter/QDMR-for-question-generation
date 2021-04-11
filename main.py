@@ -12,10 +12,6 @@ import torch.nn as nn
 from transformers import BartModel, BartTokenizer, BartForConditionalGeneration, Seq2SeqTrainer, TrainingArguments, default_data_collator, Trainer
 # from transformers.modeling_bart import shift_tokens_right
 
-# inputs = tokenizer("Hello, my dog is cute", return_tensors="pt")
-# outputs = model(**inputs)
-# last_hidden_states = outputs.last_hidden_state
-
 from datasets import load_dataset
 
 
@@ -36,24 +32,20 @@ class BreakDataset(torch.utils.data.Dataset):
         else:
             data = load_dataset('break_data', 'QDMR')[split]
 
-        self.med = data.__len__() //2
-        self.total = data.__len__()
-        self.is_unite = False
-
-        if which_half == None:
-            data = data.select(range(10)) # TODO - remove after
-        elif which_half == 1:
-            data = data.select(range(10))
-            # data = data.select(range(self.med)) # TODO remove
-        elif which_half == 2:
-            data = data.select(range(self.med, self.total))
-
+        # data = data.select(range(10))
+        if which_half=='first':                
+            data = torch.utils.data.Subset(data, range(0, len(data)//2))
+        elif which_half=='second':
+            data = torch.utils.data.Subset(data, range(len(data)//2, len(data)))
 
         self.split = split
         self.data = data
-        self.data_1 = None
-        self.data_2 = None
-        self.data = self.data.map(self.prepare_data)
+        self.which_half = which_half
+
+        if which_half is None:
+            self.data = self.data.map(self.prepare_data)
+        else:
+            self.data.dataset = self.data.dataset.map(self.prepare_data)
 
     def prepare_data(self, example):
         decomp = example['decomposition']
@@ -64,27 +56,16 @@ class BreakDataset(torch.utils.data.Dataset):
         return example
 
     def __len__(self):
-        if self.is_unite:
-            return self.data.__len__() * 2
-        else:
-            return self.data.__len__()
+        return len(self.data)
 
     def __getitem__(self, idx):
-        if not self.is_unite:
-            return self.data.__getitem__(idx)
-        else:
-            if idx % 2 ==0:
-                return self.data.__getitem__(idx//2)
-            else:
-                new_index = idx//2
-                if new_index < self.med:
-                    self.data_1.__getitem__(new_index)
-                else:
-                    new_index = new_index - self.med
-                    self.data_2.__getitem__(new_index)
+        return self.data[idx]
 
     def map(self, preprocess_function):
-        self.data = self.data.map(preprocess_function)
+        if type(self.data) is torch.utils.data.dataset.Subset:
+            self.data.dataset = self.data.dataset.map(preprocess_function)
+        else:
+            self.data = self.data.map(preprocess_function)
         # self.data = self.data.map(preprocess_function, batched=True)
 
 
