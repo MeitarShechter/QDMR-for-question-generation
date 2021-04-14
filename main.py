@@ -14,8 +14,8 @@ from transformers import BartModel, BartTokenizer, BartForConditionalGeneration,
 
 from datasets import load_dataset
 
-user_name = 'meitars'
-# user_name = 'omriefroni'
+# user_name = 'meitars'
+user_name = 'omriefroni'
 cache_dir = '/home/joberant/nlp_fall_2021/' + user_name + '/.cache'
 os.environ["TRANSFORMERS_CACHE"] = cache_dir 
 
@@ -29,7 +29,7 @@ def shift_tokens_right(input_ids, pad_token_id):
 
 
 class BreakDataset(torch.utils.data.Dataset):
-    def __init__(self, split='train', which_half='all'):
+    def __init__(self, split='traiיn', which_half='all'):
         super().__init__()
         if 'joberant' in os.path.abspath('./'):
             data = load_dataset('break_data', 'QDMR', cache_dir=cache_dir)[split]
@@ -39,15 +39,17 @@ class BreakDataset(torch.utils.data.Dataset):
         # data = data.select(range(10))
         print("Creating a BreakDataset instance for {} half(s)".format(which_half))
         if which_half == 'first':                
-            data = torch.utils.data.Subset(data, range(0, len(data)//2))
+            # data = torch.utils.data.Subset(data, range(0, len(data)//2))
+            data = data.select(range(0, 10)) #len(data)//2))
         elif which_half == 'second':
-            data = torch.utils.data.Subset(data, range(len(data)//2, len(data)))
+            # data = torch.utils.data.Subset(data, range(len(data)//2, len(data)))
+            data = data.select(range(len(data)//2, len(data)//2 +10)) #  len(data)))
 
         self.split = split
         self.data = data
         self.which_half = which_half
 
-        if which_half == 'all':
+        if True: #which_half == 'all':
             self.data = self.data.map(self.prepare_data)
         else:
             self.data.dataset = self.data.dataset.map(self.prepare_data)
