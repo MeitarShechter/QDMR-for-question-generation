@@ -5,6 +5,7 @@ import numpy as np
 import traceback
 import shutil
 import argparse
+import pickle
 
 import torch
 import torch.nn as nn
@@ -13,14 +14,14 @@ from transformers import BartModel, BartTokenizer, BartForConditionalGeneration,
 # from transformers.modeling_bart import shift_tokens_right
 from main import BreakDataset, shift_tokens_right
 
-
-
+user_name = 'meitars'
+# user_name = 'omriefroni'
+cache_dir = '/home/joberant/nlp_fall_2021/' + user_name + '/.cache'
+os.environ["TRANSFORMERS_CACHE"] = cache_dir
 
 def create_unite_dataset(trained_on_first_half_ckpt, trained_on_second_half_ckpt):
 
     if 'joberant' in os.path.abspath('./'):            
-        cache_dir = '/home/joberant/nlp_fall_2021/omriefroni/.cache'
-
         model_d2q_first_half = BartForConditionalGeneration.from_pretrained(trained_on_first_half_ckpt, cache_dir=cache_dir)            
         tokenizer_d2q_first_half = BartTokenizer.from_pretrained(trained_on_first_half_ckpt, cache_dir=cache_dir)
 
@@ -69,19 +70,28 @@ def create_unite_dataset(trained_on_first_half_ckpt, trained_on_second_half_ckpt
     train_dataset_second_half.map(change_q_to_predict_second_half)
     train_dataset = BreakDataset('train')
     train_dataset_unite = torch.utils.data.ConcatDataset([train_dataset, train_dataset_first_half, train_dataset_second_half])
-    # TODO: save the preprocessed datasets as this processing takes a lot of time!!!
 
-    return train_dataset_unite
+    train_dataset_unite_d = {}
+    for idx, example in enumerate(train_dataset_unite):
+        train_dataset_unite_d[idx] = example
+    united_QDMR_dataset = open("united_QDMR_dataset.pkl", "wb")
+    pickle.dump(train_dataset_unite_d, a_file)
+    united_QDMR_dataset.close()
+
+    # a_file = open("data.pkl", "rb")
+    # output = pickle.load(a_file)
+    # a_file.close()
+
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter, description='dynamic cage deformation')
     parser.add_argument("--name", help="experiment name")
-    parser.add_argument("--fist_half_ckpt", type=str, help="path to the checkpoint of the model that was trained on the first half of the dataset")
+    parser.add_argument("--first_half_ckpt", type=str, help="path to the checkpoint of the model that was trained on the first half of the dataset")
     parser.add_argument("--second_half_ckpt", type=str, help="path to the checkpoint of the model that was trained on the second half of the dataset")
     opt = parser.parse_args()
 
-    trained_on_first_half_ckpt = opt.fist_half_ckpt
+    trained_on_first_half_ckpt = opt.first_half_ckpt
     trained_on_second_half_ckpt = opt.second_half_ckpt
 
     create_unite_dataset(trained_on_first_half_ckpt, trained_on_second_half_ckpt)

@@ -14,6 +14,10 @@ from transformers import BartModel, BartTokenizer, BartForConditionalGeneration,
 
 from datasets import load_dataset
 
+user_name = 'meitars'
+# user_name = 'omriefroni'
+cache_dir = '/home/joberant/nlp_fall_2021/' + user_name + '/.cache'
+os.environ["TRANSFORMERS_CACHE"] = cache_dir 
 
 def shift_tokens_right(input_ids, pad_token_id):
     """Shift input ids one token to the right, and wrap the last non pad token (usually <eos>)."""
@@ -25,24 +29,25 @@ def shift_tokens_right(input_ids, pad_token_id):
 
 
 class BreakDataset(torch.utils.data.Dataset):
-    def __init__(self, split='train', which_half=None):
+    def __init__(self, split='train', which_half='all'):
         super().__init__()
         if 'joberant' in os.path.abspath('./'):
-            data = load_dataset('break_data', 'QDMR', cache_dir='/home/joberant/nlp_fall_2021/omriefroni/.cache')[split]
+            data = load_dataset('break_data', 'QDMR', cache_dir=cache_dir)[split]
         else:
             data = load_dataset('break_data', 'QDMR')[split]
 
         # data = data.select(range(10))
-        if which_half=='first':                
+        print("Creating a BreakDataset instance for {} half(s)".format(which_half))
+        if which_half == 'first':                
             data = torch.utils.data.Subset(data, range(0, len(data)//2))
-        elif which_half=='second':
+        elif which_half == 'second':
             data = torch.utils.data.Subset(data, range(len(data)//2, len(data)))
 
         self.split = split
         self.data = data
         self.which_half = which_half
 
-        if which_half is None:
+        if which_half == 'all':
             self.data = self.data.map(self.prepare_data)
         else:
             self.data.dataset = self.data.dataset.map(self.prepare_data)
@@ -84,15 +89,15 @@ def train(opt):
 
     ### model declaration ###
     if 'joberant' in os.path.abspath('./'):
-        model = BartForConditionalGeneration.from_pretrained('facebook/bart-large', cache_dir='/home/joberant/nlp_fall_2021/meitars/.cache')
-        tokenizer = BartTokenizer.from_pretrained('facebook/bart-large', cache_dir='/home/joberant/nlp_fall_2021/meitars/.cache')
+        model = BartForConditionalGeneration.from_pretrained('facebook/bart-large', cache_dir=cache_dir)
+        tokenizer = BartTokenizer.from_pretrained('facebook/bart-large', cache_dir=cache_dir)
     else:
         model = BartForConditionalGeneration.from_pretrained('facebook/bart-large')
         tokenizer = BartTokenizer.from_pretrained('facebook/bart-large')
 
     ### declare dataset ###
-    train_dataset = BreakDataset('train')
-    val_dataset = BreakDataset('validation')
+    train_dataset = BreakDataset('train', which_half=opt.dataset_half)
+    val_dataset = BreakDataset('validation', which_half=opt.dataset_half)
 
     def preprocess_function(examples):
         if opt.Q2D:
@@ -130,7 +135,7 @@ def train(opt):
 
     training_args = TrainingArguments(
         output_dir=opt.log_dir,          # output directory
-        num_train_epochs=20,              # total number of training epochs
+        num_train_epochs=4,              # total number of training epochs
         per_device_train_batch_size=2,  # batch size per device during training
         per_device_eval_batch_size=2,   # batch size for evaluation
         warmup_steps=500,                # number of warmup steps for learning rate scheduler
@@ -139,9 +144,9 @@ def train(opt):
         logging_steps=100,
         logging_strategy="steps",
         save_strategy="steps",
-        save_steps=500,
-        evaluation_strategy='steps',
-        eval_steps=500,
+        save_steps=2000,
+        evaluation_strategy='epoch',
+        # eval_steps=500,
         learning_rate=5e-5,              # default
         # no_cuda=True
     )
@@ -158,8 +163,6 @@ def train(opt):
     )
 
     trainer.train()    
-
-
 
 
 def test(opt, net, tokenizer, save_subdir="test"):
@@ -193,6 +196,7 @@ if __name__ == "__main__":
     parser.add_argument("--log_dir", type=str, help="log directory", default="./log")
     parser.add_argument("--device", type=str, help="device", default="cpu", choices=["cpu", "cuda:0"])
     parser.add_argument("--Q2D", action="store_true", help="which direction we want our transformer, if true then Question to Decomposition")
+    parser.add_argument("--dataset_half", type=str, choices=["first", "second", "all"], default="all")
     opt = parser.parse_args()
 
     if opt.ckpt is not None:
