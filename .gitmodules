@@ -1,0 +1,3 @@
+[submodule "break_evaluator"]
+	path = break_evaluator
+	url = https://github.com/MeitarShechter/break-evaluator.git
