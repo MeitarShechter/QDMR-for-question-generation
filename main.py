@@ -13,9 +13,10 @@ from transformers import BartModel, BartTokenizer, BartForConditionalGeneration,
 # from transformers.modeling_bart import shift_tokens_right
 
 from datasets import load_dataset
+import datasets
 
-user_name = 'meitars'
-# user_name = 'omriefroni'
+# user_name = 'meitars'
+user_name = 'omriefroni'
 cache_dir = '/home/joberant/nlp_fall_2021/' + user_name + '/.cache'
 os.environ["TRANSFORMERS_CACHE"] = cache_dir 
 
@@ -29,7 +30,7 @@ def shift_tokens_right(input_ids, pad_token_id):
 
 
 class BreakDataset(torch.utils.data.Dataset):
-    def __init__(self, split='train', which_half='all'):
+    def __init__(self, split='train', which_half='all', augmentation_path=None):
         super().__init__()
         if 'joberant' in os.path.abspath('./'):
             data = load_dataset('break_data', 'QDMR', cache_dir=cache_dir)[split]
@@ -39,15 +40,21 @@ class BreakDataset(torch.utils.data.Dataset):
         # data = data.select(range(10))
         print("Creating a BreakDataset instance for {} half(s)".format(which_half))
         if which_half == 'first':                
-            data = torch.utils.data.Subset(data, range(0, len(data)//2))
+            # data = torch.utils.data.Subset(data, range(0, len(data)//2))
+            data = data.select(range(0, len(data)//2))
         elif which_half == 'second':
-            data = torch.utils.data.Subset(data, range(len(data)//2, len(data)))
+            # data = torch.utils.data.Subset(data, range(len(data)//2, len(data)))
+            data = data.select(range(len(data)//2, len(data)))
+        if augmentation_path is not None:
+            data_first_half = datasets.load_from_disk(os.path.join(augmentation_path, 'first_half_data'))
+            data_second_half = datasets.load_from_disk(os.path.join(augmentation_path, 'second_half_data'))
+            data = datasets.concatenate_datasets([data, data_first_half, data_second_half])
 
         self.split = split
         self.data = data
         self.which_half = which_half
 
-        if which_half == 'all':
+        if True: #which_half == 'all':
             self.data = self.data.map(self.prepare_data)
         else:
             self.data.dataset = self.data.dataset.map(self.prepare_data)
@@ -96,7 +103,7 @@ def train(opt):
         tokenizer = BartTokenizer.from_pretrained('facebook/bart-large')
 
     ### declare dataset ###
-    train_dataset = BreakDataset('train', which_half=opt.dataset_half)
+    train_dataset = BreakDataset('train', which_half=opt.dataset_half, augmentation_path=opt.augmentation_path)
     val_dataset = BreakDataset('validation', which_half=opt.dataset_half)
 
     def preprocess_function(examples):
@@ -197,8 +204,10 @@ if __name__ == "__main__":
     parser.add_argument("--device", type=str, help="device", default="cpu", choices=["cpu", "cuda:0"])
     parser.add_argument("--Q2D", action="store_true", help="which direction we want our transformer, if true then Question to Decomposition")
     parser.add_argument("--dataset_half", type=str, choices=["first", "second", "all"], default="all")
-    opt = parser.parse_args()
+    parser.add_argument("--augmentation_path", type=str, default=None)
 
+    opt = parser.parse_args()
+    # opt.augmentation_path = '/home/joberant/nlp_fall_2021/omriefroni/qdmr_project/unite_datasets_omri/'
     if opt.ckpt is not None:
         opt.log_dir = os.path.dirname(opt.ckpt) # log dir will be in the same dir as the checkpoint
     else:
