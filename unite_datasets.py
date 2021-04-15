@@ -18,6 +18,7 @@ from main import BreakDataset, shift_tokens_right
 user_name = 'omriefroni'
 cache_dir = '/home/joberant/nlp_fall_2021/' + user_name + '/.cache'
 os.environ["TRANSFORMERS_CACHE"] = cache_dir
+output_path = '/home/joberant/nlp_fall_2021/omriefroni/qdmr_project/unite_datasets_omri/'
 
 def create_unite_dataset(trained_on_first_half_ckpt, trained_on_second_half_ckpt):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -60,6 +61,7 @@ def create_unite_dataset(trained_on_first_half_ckpt, trained_on_second_half_ckpt
         targets = examples['decomposition']
 
         model_inputs = tokenizer_d2q_first_half(targets, return_tensors="pt")
+        model_inputs = model_inputs.to(device)
         greedy_output = model_d2q_first_half.generate(**model_inputs, max_length=256)
         question_text = tokenizer_d2q_first_half.decode(greedy_output[0], skip_special_tokens=True)
 
@@ -75,17 +77,17 @@ def create_unite_dataset(trained_on_first_half_ckpt, trained_on_second_half_ckpt
     train_dataset = BreakDataset('train')
     train_dataset_unite = torch.utils.data.ConcatDataset([train_dataset, train_dataset_first_half, train_dataset_second_half])
 
-    output_path_1 = '/home/joberant/nlp_fall_2021/omriefroni/qdmr_project/unite_datasets_omri/first_half'
-    output_path_2 = '/home/joberant/nlp_fall_2021/omriefroni/qdmr_project/unite_datasets_omri/second_half'
+    output_path_1 = os.path.join(output_path + 'first_half_data')
+    output_path_2 = os.path.join(output_path + 'second_half_data')
 
     train_dataset_first_half.data.save_to_disk(output_path_1)
     train_dataset_second_half.data.save_to_disk(output_path_2)
-    train_dataset_unite_d = {}
-    for idx, example in enumerate(train_dataset_unite):
-        train_dataset_unite_d[idx] = example
-    united_QDMR_dataset = open("united_QDMR_dataset.pkl", "wb")
-    pickle.dump(train_dataset_unite_d, a_file)
-    united_QDMR_dataset.close()
+    # train_dataset_unite_d = {}
+    # for idx, example in enumerate(train_dataset_unite):
+    #     train_dataset_unite_d[idx] = example
+    # united_QDMR_dataset = open("united_QDMR_dataset.pkl", "wb")
+    # pickle.dump(train_dataset_unite_d, a_file)
+    # united_QDMR_dataset.close()
 
     # a_file = open("data.pkl", "rb")
     # output = pickle.load(a_file)
@@ -102,8 +104,8 @@ if __name__ == "__main__":
 
     trained_on_first_half_ckpt = opt.first_half_ckpt
     trained_on_second_half_ckpt = opt.second_half_ckpt
-
-    trained_on_first_half_ckpt = '/home/joberant/nlp_fall_2021/meitars/QDMR-for-question-generation/log/main-12-04-2021__21:32:48-D2Q_trained_on_first_half/checkpoint-44000'
-    trained_on_second_half_ckpt = '/home/joberant/nlp_fall_2021/meitars/QDMR-for-question-generation/log/main-12-04-2021__10:35:55-D2Q_trained_on_second_half/checkpoint-44000'
+    #
+    # trained_on_first_half_ckpt = '/home/joberant/nlp_fall_2021/meitars/QDMR-for-question-generation/log/main-12-04-2021__21:32:48-D2Q_trained_on_first_half/checkpoint-44000'
+    # trained_on_second_half_ckpt = '/home/joberant/nlp_fall_2021/meitars/QDMR-for-question-generation/log/main-12-04-2021__10:35:55-D2Q_trained_on_second_half/checkpoint-44000'
 
     create_unite_dataset(trained_on_first_half_ckpt, trained_on_second_half_ckpt)
