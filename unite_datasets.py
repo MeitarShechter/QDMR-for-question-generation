@@ -82,17 +82,6 @@ def create_unite_dataset(trained_on_first_half_ckpt, trained_on_second_half_ckpt
 
     train_dataset_first_half.data.save_to_disk(output_path_1)
     train_dataset_second_half.data.save_to_disk(output_path_2)
-    # train_dataset_unite_d = {}
-    # for idx, example in enumerate(train_dataset_unite):
-    #     train_dataset_unite_d[idx] = example
-    # united_QDMR_dataset = open("united_QDMR_dataset.pkl", "wb")
-    # pickle.dump(train_dataset_unite_d, a_file)
-    # united_QDMR_dataset.close()
-
-    # a_file = open("data.pkl", "rb")
-    # output = pickle.load(a_file)
-    # a_file.close()
-
 
 
 if __name__ == "__main__":

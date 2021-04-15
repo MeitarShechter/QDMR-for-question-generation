@@ -94,12 +94,12 @@ def eval_metrics(args):
         model = BartForConditionalGeneration.from_pretrained(args.ckpt, cache_dir=cache_dir)
         tokenizer = BartTokenizer.from_pretrained(args.ckpt, cache_dir=cache_dir)
     else:
-        model = BartForConditionalGeneration.from_pretrained(ckpt)
-        tokenizer = BartTokenizer.from_pretrained(ckpt)
+        model = BartForConditionalGeneration.from_pretrained(args.ckpt)
+        tokenizer = BartTokenizer.from_pretrained(args.ckpt)
 
     ### declare dataset ###
     # args.dataset_file = build_dataset_file(val_dataset, args.save_dir, "val_dataset") # path to a csv dataset file, with "question_id", "decomposition" and "question_text" columns
-    args.dataset_file = args.val_dataset_path #'/Users/meitarshechter/Git/break-evaluator/val_dataset.csv' # path to a csv dataset file, with "question_id", "decomposition" and "question_text" columns
+    args.dataset_file = args.val_dataset_path # path to a csv dataset file, with "question_id", "decomposition" and "question_text" columns
     args.preds_file = build_predictions_file(model, tokenizer, val_dataset, args.save_dir, "predictions") # path to a csv predictions file, with "decomposition" column
     # args.preds_file = '/Users/meitarshechter/Git/break-evaluator/predictions.csv' # path to a csv predictions file, with "decomposition" column
     args.output_file_base = args.save_dir #'/Users/meitarshechter/Git/QDMR-for-question-generation/evaluations_log/' 
@@ -121,8 +121,9 @@ if __name__ == "__main__":
     parser.add_argument("--save_dir ", type=str, help="path to the directory we'd like to save the results to")
     args = parser.parse_args()
 
-    # ckpt = '/Users/meitarshechter/Desktop/Studies/CS - MSc/NLP/Final-Project/checkpoint-85000'
-    # save_dir = '/Users/meitarshechter/Git/break-evaluator'
+    # args.ckpt = '/Users/meitarshechter/Desktop/Studies/CS - MSc/NLP/Final-Project/checkpoint-85000'
+    # args.save_dir = '/Users/meitarshechter/Git/break-evaluator'
+    # args.val_dataset_path = '/Users/meitarshechter/Git/break-evaluator/val_dataset.csv'
     os.makedirs(args.save_dir, exist_ok=True)
 
     eval_metrics(args)

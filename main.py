@@ -40,10 +40,8 @@ class BreakDataset(torch.utils.data.Dataset):
         # data = data.select(range(10))
         print("Creating a BreakDataset instance for {} half(s)".format(which_half))
         if which_half == 'first':                
-            # data = torch.utils.data.Subset(data, range(0, len(data)//2))
             data = data.select(range(0, len(data)//2))
         elif which_half == 'second':
-            # data = torch.utils.data.Subset(data, range(len(data)//2, len(data)))
             data = data.select(range(len(data)//2, len(data)))
         if augmentation_path is not None:
             data_first_half = datasets.load_from_disk(os.path.join(augmentation_path, 'first_half_data'))
@@ -54,10 +52,7 @@ class BreakDataset(torch.utils.data.Dataset):
         self.data = data
         self.which_half = which_half
 
-        if True: #which_half == 'all':
-            self.data = self.data.map(self.prepare_data)
-        else:
-            self.data.dataset = self.data.dataset.map(self.prepare_data)
+        self.data = self.data.map(self.prepare_data)
 
     def prepare_data(self, example):
         decomp = example['decomposition']
