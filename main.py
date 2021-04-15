@@ -29,7 +29,7 @@ def shift_tokens_right(input_ids, pad_token_id):
 
 
 class BreakDataset(torch.utils.data.Dataset):
-    def __init__(self, split='traiיn', which_half='all'):
+    def __init__(self, split='train', which_half='all'):
         super().__init__()
         if 'joberant' in os.path.abspath('./'):
             data = load_dataset('break_data', 'QDMR', cache_dir=cache_dir)[split]
