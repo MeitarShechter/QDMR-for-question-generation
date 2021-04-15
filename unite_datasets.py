@@ -74,8 +74,8 @@ def create_unite_dataset(trained_on_first_half_ckpt, trained_on_second_half_ckpt
 
     train_dataset_first_half.map(change_q_to_predict_first_half)
     train_dataset_second_half.map(change_q_to_predict_second_half)
-    train_dataset = BreakDataset('train')
-    train_dataset_unite = torch.utils.data.ConcatDataset([train_dataset, train_dataset_first_half, train_dataset_second_half])
+    # train_dataset = BreakDataset('train')
+    # train_dataset_unite = torch.utils.data.ConcatDataset([train_dataset, train_dataset_first_half, train_dataset_second_half])
 
     output_path_1 = os.path.join(output_path + 'first_half_data')
     output_path_2 = os.path.join(output_path + 'second_half_data')
