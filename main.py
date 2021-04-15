@@ -40,10 +40,10 @@ class BreakDataset(torch.utils.data.Dataset):
         print("Creating a BreakDataset instance for {} half(s)".format(which_half))
         if which_half == 'first':                
             # data = torch.utils.data.Subset(data, range(0, len(data)//2))
-            data = data.select(range(0, 10)) #len(data)//2))
+            data = data.select(range(0, len(data)//2))
         elif which_half == 'second':
             # data = torch.utils.data.Subset(data, range(len(data)//2, len(data)))
-            data = data.select(range(len(data)//2, len(data)//2 +10)) #  len(data)))
+            data = data.select(range(len(data)//2, len(data)))
 
         self.split = split
         self.data = data
