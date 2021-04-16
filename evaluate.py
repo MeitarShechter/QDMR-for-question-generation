@@ -59,6 +59,8 @@ def build_dataset_file(dataset, save_dir, data_name): # question_id, decompositi
 
 def build_predictions_file(model, tokenizer, dataset, save_dir, data_name): # decomposition
     csv_path = os.path.join(save_dir, data_name + ".csv")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    model = model.to(device)
 
     def postprocess(qdmr_decomposition):
         qdmr_decomposition = qdmr_decomposition.replace('@@', ';')
@@ -69,6 +71,7 @@ def build_predictions_file(model, tokenizer, dataset, save_dir, data_name): # de
         inputs = examples['question_text']
 
         model_inputs = tokenizer(inputs, return_tensors="pt")
+        model_inputs = model_inputs.to(device)
         qdmr_encoding = model.generate(**model_inputs, max_length=256)
         qdmr_decomposition = tokenizer.decode(qdmr_encoding[0], skip_special_tokens=True)
         qdmr_decomposition = postprocess(qdmr_decomposition)

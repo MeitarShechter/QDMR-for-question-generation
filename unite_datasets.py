@@ -38,13 +38,11 @@ def create_unite_dataset(trained_on_first_half_ckpt, trained_on_second_half_ckpt
         tokenizer_d2q_second_half = BartTokenizer.from_pretrained(trained_on_second_half_ckpt)
 
     train_dataset_first_half = BreakDataset('train', which_half='first')
-    # train_dataset_first_half = train_dataset_first_half.to(device)
     train_dataset_second_half = BreakDataset('train', which_half='second')
-    # train_dataset_second_half = train_dataset_second_half.to(device)
+
     def change_q_to_predict_first_half(examples):
-        inputs = examples['question_text']
         targets = examples['decomposition']
-        # targets = targets.to(device)
+
         model_inputs = tokenizer_d2q_second_half(targets, return_tensors="pt")
         model_inputs = model_inputs.to(device)
         greedy_output = model_d2q_second_half.generate(**model_inputs, max_length=256)
@@ -57,7 +55,6 @@ def create_unite_dataset(trained_on_first_half_ckpt, trained_on_second_half_ckpt
         return new_pair
 
     def change_q_to_predict_second_half(examples):
-        inputs = examples['question_text']
         targets = examples['decomposition']
 
         model_inputs = tokenizer_d2q_first_half(targets, return_tensors="pt")
@@ -75,7 +72,6 @@ def create_unite_dataset(trained_on_first_half_ckpt, trained_on_second_half_ckpt
     train_dataset_first_half.map(change_q_to_predict_first_half)
     train_dataset_second_half.map(change_q_to_predict_second_half)
     # train_dataset = BreakDataset('train')
-    # train_dataset_unite = torch.utils.data.ConcatDataset([train_dataset, train_dataset_first_half, train_dataset_second_half])
 
     output_path_1 = os.path.join(output_path + 'first_half_data')
     output_path_2 = os.path.join(output_path + 'second_half_data')
