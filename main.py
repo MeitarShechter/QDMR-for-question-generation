@@ -14,11 +14,11 @@ from transformers import BartModel, BartTokenizer, BartForConditionalGeneration,
 
 from datasets import load_dataset
 import datasets
+from unite_datasets import create_unite_dataset
+from data_util import BreakDataset, shift_tokens_right
+from global_params import *
 
-user_name = 'meitars'
-# user_name = 'omriefroni'
-cache_dir = '/home/joberant/nlp_fall_2021/' + user_name + '/.cache'
-os.environ["TRANSFORMERS_CACHE"] = cache_dir 
+
 
 def shift_tokens_right(input_ids, pad_token_id):
     """Shift input ids one token to the right, and wrap the last non pad token (usually <eos>)."""
@@ -76,6 +76,7 @@ class BreakDataset(torch.utils.data.Dataset):
         else:
             self.data = self.data.map(preprocess_function)
         # self.data = self.data.map(preprocess_function, batched=True)
+
 
 
 def train(opt):
@@ -166,7 +167,8 @@ def train(opt):
         data_collator=data_collator,
     )
 
-    trainer.train()    
+    # trainer.train(resume_from_checkpoint='/home/joberant/nlp_fall_2021/omriefroni/qdmr_project/log/main-19-04-2021__00:14:19-3datasets_after_correction/checkpoint-156000')
+    trainer.train()
 
 
 def test(opt, net, tokenizer, save_subdir="test"):
@@ -202,11 +204,14 @@ if __name__ == "__main__":
     parser.add_argument("--Q2D", action="store_true", help="which direction we want our transformer, if true then Question to Decomposition")
     parser.add_argument("--dataset_half", type=str, choices=["first", "second", "all"], default="all")
     parser.add_argument("--augmentation_path", type=str, default=None)
-
+    parser.add_argument("--first_half_ckpt", type=str,
+                        help="path to the checkpoint of the model that was trained on the first half of the dataset")
+    parser.add_argument("--second_half_ckpt", type=str,
+                        help="path to the checkpoint of the model that was trained on the second half of the dataset")
     opt = parser.parse_args()
     # opt.augmentation_path = '/home/joberant/nlp_fall_2021/omriefroni/qdmr_project/unite_datasets_omri/'
     if opt.ckpt is not None:
-        opt.log_dir = os.path.dirname(opt.ckpt) # log dir will be in the same dir as the checkpoint
+        opt.log_dir = os.path.dirname(opt.ckpt)  # log dir will be in the same dir as the checkpoint
     else:
         opt.log_dir = os.path.join(opt.log_dir, "-".join(filter(None, [os.path.basename(__file__)[:-3],
                                                                     datetime.datetime.now().strftime("%d-%m-%Y__%H:%M:%S"),
@@ -215,6 +220,15 @@ if __name__ == "__main__":
     os.makedirs(opt.log_dir, exist_ok=True)
     # log_file = open(os.path.join(opt.log_dir, "training_log.txt"), "a")
     # log_file.close()
+
+    # trained_on_first_half_ckpt = opt.first_half_ckpt
+    # trained_on_second_half_ckpt = opt.second_half_ckpt
+
+    # create_unite_dataset(trained_on_first_half_ckpt, trained_on_second_half_ckpt)
+    print('#######################################')
+    print('Finish create dataset.. starting Main')
+    print('#######################################')
+
     train(opt)
 
 
