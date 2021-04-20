@@ -1,10 +1,9 @@
 #! /bin/sh
-# conda activate /home/joberant/nlp_fall_2021/meitars/anaconda3/envs/QDMR
-#SBATCH --job-name=QDMR_Q_to_D
-#SBATCH --output=QDMR_Q_to_D.out
-#SBATCH --error=QDMR_Q_to_D.err
+#SBATCH --job-name=QDMR_Q2D_on_halves
+#SBATCH --output=QDMR_Q2D_on_halves.out
+#SBATCH --error=QDMR_Q2D_on_halves.err
 #SBATCH --partition=studentbatch
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --gpus=1
-python main.py --Q2D
+python main.py --name Q2D_on_halves --Q2D --augmentation_path '/home/joberant/nlp_fall_2021/omriefroni/qdmr_project/unite_datasets_omri/'

@@ -14,8 +14,8 @@ from transformers import BartModel, BartTokenizer, BartForConditionalGeneration,
 # from transformers.modeling_bart import shift_tokens_right
 from main import BreakDataset, shift_tokens_right
 
-# user_name = 'meitars'
-user_name = 'omriefroni'
+user_name = 'meitars'
+# user_name = 'omriefroni'
 cache_dir = '/home/joberant/nlp_fall_2021/' + user_name + '/.cache'
 os.environ["TRANSFORMERS_CACHE"] = cache_dir
 output_path = '/home/joberant/nlp_fall_2021/omriefroni/qdmr_project/unite_datasets_omri/'

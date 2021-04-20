@@ -3,10 +3,15 @@ import os
 import argparse
 import pandas as pd
 from transformers import BartTokenizer, BartForConditionalGeneration
+import torch
 
 from main import BreakDataset
 from break_evaluator.scripts.evaluate_predictions import evaluate, format_qdmr
 
+user_name = 'meitars'
+# user_name = 'omriefroni'
+cache_dir = '/home/joberant/nlp_fall_2021/' + user_name + '/.cache'
+os.environ["TRANSFORMERS_CACHE"] = cache_dir 
 
 def process_args(args):
     # load data
@@ -21,7 +26,7 @@ def process_args(args):
     # load predictions
     try:
         preds_file = pd.read_csv(args.preds_file)
-        predictions = [format_qdmr(pred) for pred in preds_file['decomposition'].to_list()]
+        predictions = [format_qdmr(pred) if type(pred) == str else "NaN" for pred in preds_file['decomposition'].to_list()]
     except Exception as ex:
         raise ValueError(f"Could not load predictions file {args.preds_file}", ex)
 
@@ -60,6 +65,7 @@ def build_dataset_file(dataset, save_dir, data_name): # question_id, decompositi
 def build_predictions_file(model, tokenizer, dataset, save_dir, data_name): # decomposition
     csv_path = os.path.join(save_dir, data_name + ".csv")
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print("Using device: {}".format(device))
     model = model.to(device)
 
     def postprocess(qdmr_decomposition):
@@ -104,6 +110,7 @@ def eval_metrics(args):
     # args.dataset_file = build_dataset_file(val_dataset, args.save_dir, "val_dataset") # path to a csv dataset file, with "question_id", "decomposition" and "question_text" columns
     args.dataset_file = args.val_dataset_path # path to a csv dataset file, with "question_id", "decomposition" and "question_text" columns
     args.preds_file = build_predictions_file(model, tokenizer, val_dataset, args.save_dir, "predictions") # path to a csv predictions file, with "decomposition" column
+    # args.preds_file = os.path.join(args.save_dir, "predictions" + ".csv") # path to a csv predictions file, with "decomposition" column
     # args.preds_file = '/Users/meitarshechter/Git/break-evaluator/predictions.csv' # path to a csv predictions file, with "decomposition" column
     args.output_file_base = args.save_dir #'/Users/meitarshechter/Git/QDMR-for-question-generation/evaluations_log/' 
 
@@ -121,12 +128,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="evaluate QDMR predictions")
     parser.add_argument("--val_dataset_path", type=str, help="path to the validation dataset (a csv file)")
     parser.add_argument("--ckpt", type=str, help="path to the checkpoint to evaluate")
-    parser.add_argument("--save_dir ", type=str, help="path to the directory we'd like to save the results to")
+    parser.add_argument("--save_dir", type=str, help="path to the checkpoint to evaluate", default='/home/joberant/nlp_fall_2021/meitars/QDMR-for-question-generation/evaluations/')
     args = parser.parse_args()
 
     # args.ckpt = '/Users/meitarshechter/Desktop/Studies/CS - MSc/NLP/Final-Project/checkpoint-85000'
     # args.save_dir = '/Users/meitarshechter/Git/break-evaluator'
     # args.val_dataset_path = '/Users/meitarshechter/Git/break-evaluator/val_dataset.csv'
+    print(args.val_dataset_path)
+    print(args.ckpt)
+    print(args.save_dir)
     os.makedirs(args.save_dir, exist_ok=True)
 
     eval_metrics(args)

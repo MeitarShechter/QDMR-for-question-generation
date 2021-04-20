@@ -15,8 +15,8 @@ from transformers import BartModel, BartTokenizer, BartForConditionalGeneration,
 from datasets import load_dataset
 import datasets
 
-# user_name = 'meitars'
-user_name = 'omriefroni'
+user_name = 'meitars'
+# user_name = 'omriefroni'
 cache_dir = '/home/joberant/nlp_fall_2021/' + user_name + '/.cache'
 os.environ["TRANSFORMERS_CACHE"] = cache_dir 
 
@@ -46,13 +46,15 @@ class BreakDataset(torch.utils.data.Dataset):
         if augmentation_path is not None:
             data_first_half = datasets.load_from_disk(os.path.join(augmentation_path, 'first_half_data'))
             data_second_half = datasets.load_from_disk(os.path.join(augmentation_path, 'second_half_data'))
+            data = data.map(self.prepare_data)
             data = datasets.concatenate_datasets([data, data_first_half, data_second_half])
 
         self.split = split
         self.data = data
         self.which_half = which_half
 
-        self.data = self.data.map(self.prepare_data)
+        if augmentation_path is None:
+            self.data = self.data.map(self.prepare_data)
 
     def prepare_data(self, example):
         decomp = example['decomposition']
