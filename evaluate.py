@@ -64,6 +64,7 @@ def build_dataset_file(dataset, save_dir, data_name): # question_id, decompositi
 
 def build_predictions_file(model, tokenizer, dataset, save_dir, data_name): # decomposition
     csv_path = os.path.join(save_dir, data_name + ".csv")
+    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print("Using device: {}".format(device))
     model = model.to(device)
@@ -96,8 +97,11 @@ def build_predictions_file(model, tokenizer, dataset, save_dir, data_name): # de
 def eval_metrics(args):
 
     args.no_cache = True
-    args.metrics = ['exact_match', 'sari', 'ged', 'normalized_exact_match']
-    val_dataset = BreakDataset('validation')
+    args.metrics = args.metrics
+    if args.do_test:
+        test_dataset = BreakDataset('test')
+    else:
+        val_dataset = BreakDataset('validation')
 
     if 'joberant' in os.path.abspath('./'):
         model = BartForConditionalGeneration.from_pretrained(args.ckpt, cache_dir=cache_dir)
@@ -109,7 +113,11 @@ def eval_metrics(args):
     ### declare dataset ###
     # args.dataset_file = build_dataset_file(val_dataset, args.save_dir, "val_dataset") # path to a csv dataset file, with "question_id", "decomposition" and "question_text" columns
     args.dataset_file = args.val_dataset_path # path to a csv dataset file, with "question_id", "decomposition" and "question_text" columns
-    args.preds_file = build_predictions_file(model, tokenizer, val_dataset, args.save_dir, "predictions") # path to a csv predictions file, with "decomposition" column
+    if args.do_test:
+        build_predictions_file(model, tokenizer, test_dataset, args.save_dir, "test_predictions") # path to a csv predictions file, with "decomposition" column
+        return
+    else:
+        args.preds_file = build_predictions_file(model, tokenizer, val_dataset, args.save_dir, "predictions") # path to a csv predictions file, with "decomposition" column
     # args.preds_file = os.path.join(args.save_dir, "predictions" + ".csv") # path to a csv predictions file, with "decomposition" column
     # args.preds_file = '/Users/meitarshechter/Git/break-evaluator/predictions.csv' # path to a csv predictions file, with "decomposition" column
     args.output_file_base = args.save_dir #'/Users/meitarshechter/Git/QDMR-for-question-generation/evaluations_log/' 
@@ -126,9 +134,11 @@ def eval_metrics(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="evaluate QDMR predictions")
-    parser.add_argument("--val_dataset_path", type=str, help="path to the validation dataset (a csv file)")
+    parser.add_argument("--val_dataset_path", type=str, help="path to the validation dataset (a csv file)", default="/Users/meitarshechter/Git/break-evaluator/val_dataset.csv")
     parser.add_argument("--ckpt", type=str, help="path to the checkpoint to evaluate")
+    parser.add_argument('--metrics', nargs='+', default=['exact_match', 'sari', 'ged', 'normalized_exact_match'], help='which metrics to run')
     parser.add_argument("--save_dir", type=str, help="path to the checkpoint to evaluate", default='/home/joberant/nlp_fall_2021/meitars/QDMR-for-question-generation/evaluations/')
+    parser.add_argument("--do_test", action="store_true", help="whether to create prediction file on the test dataset")
     args = parser.parse_args()
 
     # args.ckpt = '/Users/meitarshechter/Desktop/Studies/CS - MSc/NLP/Final-Project/checkpoint-85000'
@@ -136,6 +146,7 @@ if __name__ == "__main__":
     # args.val_dataset_path = '/Users/meitarshechter/Git/break-evaluator/val_dataset.csv'
     print(args.val_dataset_path)
     print(args.ckpt)
+    print(args.metrics)
     print(args.save_dir)
     os.makedirs(args.save_dir, exist_ok=True)
 
